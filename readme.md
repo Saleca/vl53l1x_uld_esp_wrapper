@@ -1,12 +1,12 @@
 # VL53L1X_ULD_ESP_WRAPPER
 
-i created this wrapper to *hopefully* simplify the use of vl53l1x time of flight sensors in esp-idf
+i created this wrapper to simplify the use of vl53l1x time of flight sensors in esp-idf
 
-the component is not complete, and **there will be breaking changes**, but there are two potential uses for this component:
-- as demonstrated bellow and in the `example.c` its possible to have the sensor configured and measuring with minimal set up required.
-- using the raw API, bare in mind that the API requires platform specific implementation for I2C and WAIT function(s) that can be found in `core/src/vl53l1_platform.c` or simply by assigning functions to the pointers at the bottom of the file.
+there are two potential uses for this component:
+1) as demonstrated bellow and in the `example.c` its possible to have the sensor configured and measuring with minimal set up required.
+2) using the API directly, provided that user implements the I2C functions that can be found in `core/src/vl53l1_platform.c` *(more on this at the end)*
 
-> future chages include (*potential breaking changes*)
+> future chages to the wraper section include ***potential* breaking changes**
 
 # how to include on your esp-idf project
 
@@ -18,7 +18,7 @@ add the dependency and include the component on the cmake file for example
 dependencies:
   idf:
       version: '>=5.5.0'
-  saleca/vl53l1x_uld_esp_wrapper: ^0.0.5 # <-- add the component as a dependency
+  saleca/vl53l1x_uld_esp_wrapper: ^0.0.6 # <-- add the component as a dependency
 ```
 ```cmake
 # /main/CMakeLists.txt
@@ -35,7 +35,7 @@ idf_component_register(
 ```
 
 ## otherwise
-download the component into `/components/vl53l1x_uld_esp_wrapper` and add the component to the REQUIRES lists as shown above.
+[download the component](https://github.com/Saleca/vl53l1x_uld_esp_wrapper.git) into `{root}/components/vl53l1x_uld_esp_wrapper` and add the component to the REQUIRES lists as shown above.
 
 # how to get a measurement
 
@@ -77,6 +77,27 @@ uint16_t distance = vl53l1x_get_mm(&vl53l1x_device);
 
 now build and flash to the device.
 
+
+## to use the API directly
+the API expects an i2c implementation, by default the `vl53l1x_init` assigns my implementation with `driver/i2c_master.h` but if you need other i2c configuration you can either modify directly the methods in `vl53l1x_platform.h` or you can create your implementation using the following definitions and assign the methods when initializing the sensor.
+
+```c
+// for all definitions see vl53l1x_platform.h
+typedef int8_t (*vl53l1x_write_multi)(uint16_t dev, uint16_t index, uint8_t *pdata, uint32_t count);
+
+extern vl53l1x_write_multi g_vl53l1x_write_multi_ptr;
+```
+example of usage:
+```c
+// new i2c definition
+int8_t i2c_write_multi(uint16_t dev, uint16_t index, uint8_t *pdata, uint32_t count);
+
+// needed before any interation with the API
+g_vl53l1x_write_multi_ptr = i2c_write_multi;
+```
+then you can initialize the sensor for minimal example see `vl53l1x.c` `vl53l1x_add_device` implementation.
+
+
 ### any criticism, suggestions or contributions are welcome. 
 
 future changes potentially include:
@@ -90,3 +111,5 @@ future changes potentially include:
 - add calibration procedures
 
 - proper error handling (at the moment the wrapper logs most of the errors but only returns bool)
+
+> although the component wrapper is under **MIT** licensing the contents from `core` directory are sourced from the **ST VL53L1X ULD API** and are governed by the open source **SLA0103** license from STMicroelectronics
