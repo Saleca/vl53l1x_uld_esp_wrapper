@@ -1,12 +1,12 @@
 # VL53L1X_ULD_ESP_WRAPPER
 
-I created this wrapper to *hopefully* simplify the use of vl53l1x time of flight sensors in esp-idf
+i created this wrapper to *hopefully* simplify the use of vl53l1x time of flight sensors in esp-idf
 
-The component is not complete, and **there will be breaking changes**, but there are two potential uses for this component:
+the component is not complete, and **there will be breaking changes**, but there are two potential uses for this component:
 - as demonstrated bellow and in the `example.c` its possible to have the sensor configured and measuring with minimal set up required.
 - using the raw API, bare in mind that the API requires platform specific implementation for I2C and WAIT function(s) that can be found in `core/src/vl53l1_platform.c` or simply by assigning functions to the pointers at the bottom of the file.
 
-> future chages include  rearrangement of astraction layer (*potential breaking changes*), sensor config handle to include default values for timings and modes of operation, although the aim is to make it simple, I designed it like this to allow multiple sensors under multiple i2c bus but bare in mind i have done very little testing. 
+> future chages include (*potential breaking changes*)
 
 # how to include on your esp-idf project
 
@@ -34,18 +34,20 @@ idf_component_register(
         esp_driver_gpio) 
 ```
 
-## using github
-download the component into the project, for example in `/components/vl53l1x_uld_esp_wrapper` and add the component to the REQUIRES lists as shown above
+## otherwise
+download the component into `/components/vl53l1x_uld_esp_wrapper` and add the component to the REQUIRES lists as shown above.
 
 # how to get a measurement
 
 first the `vl53l1x_uld_esp_wrapper` component has to be initialized with at least `scl_gpio` and `sda_gpio` in `vl53l1x_handle.i2c_handle`, this will initialize the platform functions and the `driver/i2c_master.h` component. 
+
+for this example you only need to include `vl53l1x.h`.
 ```c
-vl53l1x_handle_t vl53l1x_handle = VL53L1X_INIT;
 vl53l1x_i2c_handle_t vl53l1x_i2c_handle = VL53L1X_I2C_INIT;
 vl53l1x_i2c_handle.scl_gpio = SCL_GPIO;
 vl53l1x_i2c_handle.sda_gpio = SDA_GPIO;
 
+vl53l1x_handle_t vl53l1x_handle = VL53L1X_INIT;
 vl53l1x_handle.i2c_handle = &vl53l1x_i2c_handle;
 if (!vl53l1x_init(&vl53l1x_handle))
 {
@@ -70,8 +72,21 @@ if (!vl53l1x_add_device(&vl53l1x_device))
 and finaly to get a measurement just call `vl53l1x_get_mm` with the `vl53l1x_device_handle_t` address from before.
 
 ```c
-if (vl53l1x_handle.initialized)
-{
-    ESP_LOGI(TAG, "distance: %d mm", vl53l1x_get_mm(&vl53l1x_device));
-}
+uint16_t distance = vl53l1x_get_mm(&vl53l1x_device);
 ```
+
+now build and flash to the device.
+
+### any criticism, suggestions or contributions are welcome. 
+
+future changes potentially include:
+
+- rearrangement of abstraction layer
+
+- modifying the raw API in favor of using handles bypassing the API platform abstraction declutering the component.
+
+- add sensor configuration handle 
+
+- add calibration procedures
+
+- proper error handling (at the moment the wrapper logs most of the errors but only returns bool)
