@@ -18,7 +18,7 @@ add the dependency and include the component on the cmake file for example
 dependencies:
   idf:
       version: '>=5.5.0'
-  saleca/vl53l1x_uld_esp_wrapper: ^0.0.1 # <-- add the component as a dependency
+  saleca/vl53l1x_uld_esp_wrapper: ^0.0.5 # <-- add the component as a dependency
 ```
 ```cmake
 # /main/CMakeLists.txt
